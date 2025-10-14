@@ -34,10 +34,30 @@ public class GameManager : MonoBehaviour
     {
         currentScore += points;
         Debug.Log($"Score updated! Current score: {currentScore}");
+        
+        PlayFabSaveManager.Instance.SaveScoreToCloud(currentScore);
     }
     
     public int GetScore()
     {
         return currentScore;
+    }
+    
+    public void OnCloudSaveComplete(bool success)
+    {
+        if (success)
+        {
+            Debug.Log("Cloud save successful - game can continue");
+        }
+        else
+        {
+            Debug.LogError("CRITICAL: Cloud save failed - game will be blocked");
+        }
+    }
+    
+    public void SetScoreFromCloud(int cloudScore)
+    {
+        currentScore = cloudScore;
+        Debug.Log($"Score loaded from cloud: {currentScore}");
     }
 }

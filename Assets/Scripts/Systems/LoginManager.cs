@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 using PlayFab;
+using PlayFab.ClientModels;
 
 public class LoginManager : MonoBehaviour
 {
@@ -43,10 +44,10 @@ public class LoginManager : MonoBehaviour
             return;
         }
         
-        statusText.text = "Connecting to online services...";
+        statusText.text = "Connecting to PlayFab...";
         loginButton.interactable = false;
         
-        StartCoroutine(SimulateLoginRequest(username, password));
+        AttemptPlayFabLogin(username, password);
     }
     
     private System.Collections.IEnumerator SimulateLoginRequest(string username, string password)
@@ -74,6 +75,69 @@ public class LoginManager : MonoBehaviour
     private bool CheckInternetConnection()
     {
         return Application.internetReachability != NetworkReachability.NotReachable;
+    }
+    
+    private void AttemptPlayFabLogin(string username, string password)
+    {
+        Debug.Log($"PlayFab Title ID: {PlayFabSettings.staticSettings.TitleId}");
+        Debug.Log($"Attempting login with username: {username}");
+        Debug.Log($"PlayFab API URL: {PlayFabSettings.staticSettings.ProductionEnvironmentUrl}");
+        
+        if (Application.internetReachability == NetworkReachability.NotReachable)
+        {
+            statusText.text = "No internet connection";
+            loginButton.interactable = true;
+            return;
+        }
+        
+        var loginRequest = new LoginWithPlayFabRequest
+        {
+            Username = username,
+            Password = password
+        };
+        
+        Debug.Log("Sending PlayFab login request with username...");
+        PlayFabClientAPI.LoginWithPlayFab(loginRequest, OnPlayFabLoginSuccess, 
+            (error) => TryEmailLogin(username, password, error));
+    }
+    
+    private void OnPlayFabLoginSuccess(LoginResult result)
+    {
+        Debug.Log("PlayFab login successful!");
+        statusText.text = "PlayFab login successful! Loading game...";
+        
+        PlayerPrefs.SetString("PlayerUsername", result.PlayFabId);
+        PlayerPrefs.SetString("AuthToken", result.SessionTicket);
+        PlayerPrefs.SetString("PlayFabId", result.PlayFabId);
+        PlayerPrefs.SetInt("IsAuthenticated", 1);
+        
+        Invoke("LoadGameScene", 1f);
+    }
+    
+    private void TryEmailLogin(string emailOrUsername, string password, PlayFabError usernameError)
+    {
+        Debug.LogWarning($"Username login failed, trying email: {usernameError.ErrorMessage}");
+        
+        var emailLoginRequest = new LoginWithEmailAddressRequest
+        {
+            Email = emailOrUsername,
+            Password = password
+        };
+        
+        Debug.Log("Trying PlayFab login with email...");
+        PlayFabClientAPI.LoginWithEmailAddress(emailLoginRequest, OnPlayFabLoginSuccess, OnPlayFabLoginFailure);
+    }
+    
+    private void OnPlayFabLoginFailure(PlayFabError error)
+    {
+        Debug.LogError($"PlayFab login failed: {error.GenerateErrorReport()}");
+        Debug.LogError($"Error Code: {error.Error}");
+        Debug.LogError($"Error Message: {error.ErrorMessage}");
+        Debug.LogError($"Error Details: {error.ErrorDetails}");
+        
+        statusText.text = $"PlayFab Login Failed: {error.ErrorMessage}";
+        
+        loginButton.interactable = true;
     }
     
     private void OnLoginSuccess(string username)

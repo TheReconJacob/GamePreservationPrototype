@@ -35,6 +35,12 @@ public class GameManager : MonoBehaviour
         currentScore += points;
         Debug.Log($"Score updated! Current score: {currentScore}");
         
+        var scoreUI = FindObjectOfType<ScoreUI>();
+        if (scoreUI != null)
+        {
+            scoreUI.FlashScore();
+        }
+        
         PlayFabSaveManager.Instance.SaveScoreToCloud(currentScore);
     }
     

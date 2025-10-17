@@ -30,11 +30,39 @@ public class LoginManager : MonoBehaviour
         
         PlayFabSettings.staticSettings.TitleId = playfabTitleId;
         
+        CheckForOfflineMode();
+        
         Debug.Log("Login screen loaded - game access blocked until authentication");
+    }
+    
+    private void CheckForOfflineMode()
+    {
+        if (!NetworkManager.Instance.HasInternetConnection())
+        {
+            ActivateOfflineMode();
+        }
+    }
+    
+    private void ActivateOfflineMode()
+    {
+        NetworkManager.Instance.SetOfflineMode(true);
+        statusText.text = "No internet connection detected.\nEntering offline mode...";
+        
+        PlayerPrefs.SetString("PlayerUsername", "OfflinePlayer");
+        PlayerPrefs.SetString("AuthToken", "offline_token");
+        PlayerPrefs.SetInt("IsAuthenticated", 1);
+        
+        Invoke("LoadGameScene", 2f);
     }
     
     public void OnLoginButtonClicked()
     {
+        if (!NetworkManager.Instance.HasInternetConnection())
+        {
+            ActivateOfflineMode();
+            return;
+        }
+        
         string username = usernameInput.text;
         string password = passwordInput.text;
         

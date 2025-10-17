@@ -46,6 +46,17 @@ public class PlayFabSaveManager : MonoBehaviour
     {
         Debug.Log($"Attempting to save score to cloud: {score}");
         
+        if (NetworkManager.Instance.IsOfflineMode())
+        {
+            Debug.Log("Offline mode - skipping cloud save");
+            var gameManager = FindObjectOfType<GameManager>();
+            if (gameManager != null)
+            {
+                gameManager.OnCloudSaveComplete(true);
+            }
+            return;
+        }
+        
         if (!PlayFabClientAPI.IsClientLoggedIn())
         {
             Debug.LogError("Cannot save to cloud - user not logged in!");

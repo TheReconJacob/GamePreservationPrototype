@@ -25,56 +25,46 @@ public class LoginManager : MonoBehaviour
     
     private void Start()
     {
-        statusText.text = "Please login to continue";
-        loginButton.onClick.AddListener(OnLoginButtonClicked);
-        
-        PlayFabSettings.staticSettings.TitleId = playfabTitleId;
-        
-        CheckForOfflineMode();
-        
-        Debug.Log("Login screen loaded - game access blocked until authentication");
-    }
-    
-    private void CheckForOfflineMode()
-    {
         if (!NetworkManager.Instance.HasInternetConnection())
         {
-            ActivateOfflineMode();
+            BypassAuthentication();
+            return;
         }
+        statusText.text = "Please login to continue";
+        loginButton.onClick.AddListener(OnLoginButtonClicked);
+        PlayFabSettings.staticSettings.TitleId = playfabTitleId;
+        Debug.Log("Login screen loaded - game access blocked until authentication");
     }
-    
-    private void ActivateOfflineMode()
+
+    private void BypassAuthentication()
     {
         NetworkManager.Instance.SetOfflineMode(true);
-        statusText.text = "No internet connection detected.\nEntering offline mode...";
-        
+        if (statusText != null)
+        {
+            statusText.text = "No internet connection detected.\nPLAYING OFFLINE";
+        }
         PlayerPrefs.SetString("PlayerUsername", "OfflinePlayer");
         PlayerPrefs.SetString("AuthToken", "offline_token");
         PlayerPrefs.SetInt("IsAuthenticated", 1);
-        
-        Invoke("LoadGameScene", 2f);
+        Invoke("LoadGameScene", 1f);
     }
     
     public void OnLoginButtonClicked()
     {
         if (!NetworkManager.Instance.HasInternetConnection())
         {
-            ActivateOfflineMode();
+            BypassAuthentication();
             return;
         }
-        
         string username = usernameInput.text;
         string password = passwordInput.text;
-        
         if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
         {
             statusText.text = "Please enter both username and password";
             return;
         }
-        
         statusText.text = "Connecting to PlayFab...";
         loginButton.interactable = false;
-        
         AttemptPlayFabLogin(username, password);
     }
     

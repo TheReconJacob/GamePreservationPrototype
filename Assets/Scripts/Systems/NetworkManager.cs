@@ -1,9 +1,14 @@
 using UnityEngine;
+using System;
 
 public class NetworkManager : MonoBehaviour
 {
     [Header("Network Settings")]
     public float connectivityCheckInterval = 5f;
+    
+    private bool hasInternet = true;
+    private bool isOfflineMode = false;
+    public static Action OnInternetRestored;
     
     private static NetworkManager instance;
     public static NetworkManager Instance
@@ -24,9 +29,6 @@ public class NetworkManager : MonoBehaviour
         }
     }
     
-    private bool hasInternet = true;
-    private bool isOfflineMode = false;
-    
     private void Awake()
     {
         if (instance == null)
@@ -42,7 +44,13 @@ public class NetworkManager : MonoBehaviour
     
     private void Start()
     {
-        InvokeRepeating(nameof(CheckConnectivity), 0f, connectivityCheckInterval);
+        hasInternet = Application.internetReachability != NetworkReachability.NotReachable;
+        if (!hasInternet)
+        {
+            isOfflineMode = true;
+            Debug.Log("Started in offline mode");
+        }
+        InvokeRepeating(nameof(CheckConnectivity), connectivityCheckInterval, connectivityCheckInterval);
     }
     
     private void CheckConnectivity()
@@ -84,6 +92,7 @@ public class NetworkManager : MonoBehaviour
         {
             Debug.Log("Internet connection restored - exiting offline mode");
             SetOfflineMode(false);
+            OnInternetRestored?.Invoke();
         }
     }
 }

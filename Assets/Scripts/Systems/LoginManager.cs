@@ -23,37 +23,78 @@ public class LoginManager : MonoBehaviour
     [Header("PlayFab Configuration")]
     public string playfabTitleId = "1042B5";
     
+    private bool isOfflineModeActive = false;
+    private Canvas loginCanvas;
+    
     private void Start()
     {
+        loginCanvas = GetComponentInParent<Canvas>();
+        if (loginCanvas == null)
+        {
+            loginCanvas = GetComponent<Canvas>();
+        }
+        
+        NetworkManager.OnInternetRestored += OnInternetRestored;
+        
         if (!NetworkManager.Instance.HasInternetConnection())
         {
+            Debug.Log("Started without internet connection - bypassing login");
             BypassAuthentication();
             return;
         }
+        
+        InitializeLoginUI();
+        Debug.Log("Login screen loaded - game access blocked until authentication");
+    }
+    
+    private void OnDestroy()
+    {
+        NetworkManager.OnInternetRestored -= OnInternetRestored;
+    }
+    
+    private void InitializeLoginUI()
+    {
         statusText.text = "Please login to continue";
         loginButton.onClick.AddListener(OnLoginButtonClicked);
         PlayFabSettings.staticSettings.TitleId = playfabTitleId;
-        Debug.Log("Login screen loaded - game access blocked until authentication");
+        isOfflineModeActive = false;
+    }
+    
+    private void OnInternetRestored()
+    {
+        if (isOfflineModeActive)
+        {
+            Debug.Log("Internet restored - returning to login screen");
+            isOfflineModeActive = false;
+            SceneManager.LoadScene("LoginScene");
+        }
     }
 
     private void BypassAuthentication()
     {
+        isOfflineModeActive = true;
         NetworkManager.Instance.SetOfflineMode(true);
         if (statusText != null)
         {
-            statusText.text = "No internet connection detected.\nPLAYING OFFLINE";
+            statusText.text = "No internet connection detected.\nLoading offline mode...";
+        }
+        if (loginCanvas != null)
+        {
+            loginCanvas.gameObject.SetActive(false);
         }
         PlayerPrefs.SetString("PlayerUsername", "OfflinePlayer");
         PlayerPrefs.SetString("AuthToken", "offline_token");
         PlayerPrefs.SetInt("IsAuthenticated", 1);
-        Invoke("LoadGameScene", 1f);
+        PlayerPrefs.SetInt("IsBypassedLogin", 1);
+        Invoke("LoadGameScene", 1.5f);
     }
     
     public void OnLoginButtonClicked()
     {
         if (!NetworkManager.Instance.HasInternetConnection())
         {
-            BypassAuthentication();
+            statusText.text = "No internet connection detected.";
+            loginButton.interactable = true;
             return;
         }
         string username = usernameInput.text;
@@ -128,6 +169,7 @@ public class LoginManager : MonoBehaviour
         PlayerPrefs.SetString("AuthToken", result.SessionTicket);
         PlayerPrefs.SetString("PlayFabId", result.PlayFabId);
         PlayerPrefs.SetInt("IsAuthenticated", 1);
+        PlayerPrefs.SetInt("IsBypassedLogin", 0);
         
         Invoke("LoadGameScene", 1f);
     }

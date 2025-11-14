@@ -27,12 +27,22 @@ public class GameManager : MonoBehaviour
             return;
         }
         
-        int savedOfflineScore = PlayerPrefs.GetInt("OfflineScore", 0);
-        if (savedOfflineScore > 0)
+        SaveGameData saveData = LocalSaveManager.Instance.LoadFromJSON();
+        if (saveData != null)
         {
-            currentScore = savedOfflineScore;
-            PlayerPrefs.DeleteKey("OfflineScore");
-            Debug.Log($"Restored score from offline session: {currentScore}");
+            currentScore = saveData.score;
+            Debug.Log($"Restored score from local JSON save: {currentScore}");
+        }
+        else
+        {
+            int savedOfflineScore = PlayerPrefs.GetInt("OfflineScore", 0);
+            if (savedOfflineScore > 0)
+            {
+                currentScore = savedOfflineScore;
+                PlayerPrefs.DeleteKey("OfflineScore");
+                Debug.Log($"Restored score from legacy offline session: {currentScore}");
+                LocalSaveManager.Instance.SaveToJSON(currentScore);
+            }
         }
         
         Debug.Log("Game started! Score: " + currentScore);
@@ -51,7 +61,7 @@ public class GameManager : MonoBehaviour
         if (!NetworkManager.Instance.IsOfflineMode() && wasBypassedLogin)
         {
             Debug.Log("Internet restored - user bypassed login, redirecting to login screen");
-            PlayerPrefs.SetInt("OfflineScore", currentScore);
+            LocalSaveManager.Instance.SaveToJSON(currentScore);
             SceneManager.LoadScene("LoginScene");
         }
         else if (!NetworkManager.Instance.IsOfflineMode())
@@ -80,6 +90,8 @@ public class GameManager : MonoBehaviour
     {
         currentScore += points;
         Debug.Log($"Score updated! Current score: {currentScore}");
+        
+        LocalSaveManager.Instance.SaveToJSON(currentScore);
         
         var scoreUI = FindObjectOfType<ScoreUI>();
         if (scoreUI != null)

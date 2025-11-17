@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         NetworkManager.OnInternetRestored += OnInternetRestored;
+        NetworkManager.OnInternetLost += OnInternetLost;  // Subscribe to connection loss event
         
         if (NetworkManager.Instance.IsOfflineMode() && !HasOfflineSession())
         {
@@ -52,6 +53,7 @@ public class GameManager : MonoBehaviour
     private void OnDestroy()
     {
         NetworkManager.OnInternetRestored -= OnInternetRestored;
+        NetworkManager.OnInternetLost -= OnInternetLost;  // Unsubscribe from connection loss event
     }
     
     private void OnInternetRestored()
@@ -67,6 +69,24 @@ public class GameManager : MonoBehaviour
         else if (!NetworkManager.Instance.IsOfflineMode())
         {
             Debug.Log("Internet restored - resuming online gameplay with existing authentication");
+        }
+    }
+    
+    private void OnInternetLost()
+    {
+        Debug.Log("Connection lost - attempting to migrate cloud saves to local storage");
+        
+        // Only migrate from cloud if we're not in a bypassed login session
+        bool wasBypassedLogin = PlayerPrefs.GetInt("IsBypassedLogin", 0) == 1;
+        if (!wasBypassedLogin)
+        {
+            // Load latest score from cloud and save to local JSON
+            PlayFabSaveManager.Instance.LoadScoreFromCloud();
+        }
+        else
+        {
+            // Already playing offline with local save
+            Debug.Log("Already in offline bypass mode - local saves will continue");
         }
     }
     

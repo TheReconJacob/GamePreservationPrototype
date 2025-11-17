@@ -186,6 +186,10 @@ public class PlayFabSaveManager : MonoBehaviour
             int cloudScore = int.Parse(result.Data["PlayerScore"].Value);
             Debug.Log($"Loaded score from cloud: {cloudScore}");
             
+            // Save cloud data to local JSON for offline access
+            LocalSaveManager.Instance.SaveToJSON(cloudScore);
+            Debug.Log($"Migrated cloud score to local JSON: {cloudScore}");
+            
             var gameManager = FindObjectOfType<GameManager>();
             if (gameManager != null)
             {

@@ -9,6 +9,7 @@ public class NetworkManager : MonoBehaviour
     private bool hasInternet = true;
     private bool isOfflineMode = false;
     public static Action OnInternetRestored;
+    public static Action OnInternetLost;  // New event for connection loss
     
     private static NetworkManager instance;
     public static NetworkManager Instance
@@ -87,6 +88,7 @@ public class NetworkManager : MonoBehaviour
         {
             Debug.Log("Lost internet connection - switching to offline mode");
             SetOfflineMode(true);
+            OnInternetLost?.Invoke();  // Trigger cloud-to-local migration
         }
         else if (connected && isOfflineMode)
         {

@@ -101,6 +101,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pointValue: 10
+  gameEvents: {fileID: 11400000, guid: e4efdb5a238cdd84ab1338ac62ab334d, type: 2}
 --- !u!65 &141848344625210831
 BoxCollider:
   m_ObjectHideFlags: 0

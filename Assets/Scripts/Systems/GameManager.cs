@@ -6,13 +6,29 @@ public class GameManager : MonoBehaviour
     [Header("Game State")]
     public int currentScore = 0;
     
+    [Header("Game Events")]
+    [Tooltip("Reference to the GameEvents ScriptableObject")]
+    public GameEventSO gameEvents;
+    
     [Header("Online Dependency")]
     public bool requireOnlineAuth = true;
     
     void Start()
     {
+        // Subscribe to network events
         NetworkManager.OnInternetRestored += OnInternetRestored;
-        NetworkManager.OnInternetLost += OnInternetLost;  // Subscribe to connection loss event
+        NetworkManager.OnInternetLost += OnInternetLost;
+        
+        // Subscribe to game events
+        if (gameEvents != null)
+        {
+            gameEvents.OnTargetDestroyed.AddListener(OnTargetDestroyed);
+            Debug.Log("GameManager subscribed to game events");
+        }
+        else
+        {
+            Debug.LogWarning("GameEvents ScriptableObject not assigned to GameManager!");
+        }
         
         if (NetworkManager.Instance.IsOfflineMode() && !HasOfflineSession())
         {
@@ -46,14 +62,27 @@ public class GameManager : MonoBehaviour
             }
         }
         
+        // Broadcast the loaded score to UI immediately
+        if (gameEvents != null && currentScore > 0)
+        {
+            gameEvents.RaiseScoreChanged(currentScore);
+        }
+        
         Debug.Log("Game started! Score: " + currentScore);
         Debug.Log("Player authenticated as: " + PlayerPrefs.GetString("PlayerUsername", "None"));
     }
     
     private void OnDestroy()
     {
+        // Unsubscribe from network events
         NetworkManager.OnInternetRestored -= OnInternetRestored;
-        NetworkManager.OnInternetLost -= OnInternetLost;  // Unsubscribe from connection loss event
+        NetworkManager.OnInternetLost -= OnInternetLost;
+        
+        // Unsubscribe from game events
+        if (gameEvents != null)
+        {
+            gameEvents.OnTargetDestroyed.RemoveListener(OnTargetDestroyed);
+        }
     }
     
     private void OnInternetRestored()
@@ -106,20 +135,27 @@ public class GameManager : MonoBehaviour
         return isAuth == 1 && !string.IsNullOrEmpty(authToken);
     }
     
+    // Event handler for target destruction
+    private void OnTargetDestroyed(int pointValue)
+    {
+        Debug.Log($"[GameManager] Target destroyed event received with {pointValue} points");
+        AddScore(pointValue);
+    }
+    
     public void AddScore(int points)
     {
         currentScore += points;
         Debug.Log($"Score updated! Current score: {currentScore}");
         
+        // Save to local and cloud storage
         LocalSaveManager.Instance.SaveToJSON(currentScore);
-        
-        var scoreUI = FindObjectOfType<ScoreUI>();
-        if (scoreUI != null)
-        {
-            scoreUI.FlashScore();
-        }
-        
         PlayFabSaveManager.Instance.SaveScoreToCloud(currentScore);
+        
+        // Trigger score changed event (ScoreUI will automatically update and flash)
+        if (gameEvents != null)
+        {
+            gameEvents.RaiseScoreChanged(currentScore);
+        }
     }
     
     public int GetScore()

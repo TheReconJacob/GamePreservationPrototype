@@ -11,35 +11,59 @@ public class ScoreUI : MonoBehaviour
     public string scorePrefix = "Score: ";
     public string highScorePrefix = "Best: ";
     
-    private GameManager gameManager;
-    private int lastDisplayedScore = -1;
+    [Header("Game Events")]
+    [Tooltip("Reference to the GameEvents ScriptableObject")]
+    public GameEventSO gameEvents;
     
     void Start()
     {
-        gameManager = FindObjectOfType<GameManager>();
-        UpdateScoreDisplay();
-    }
-    
-    void Update()
-    {
-        if (gameManager != null && scoreText != null)
+        // Initialize display first (before subscribing to events)
+        var gameManager = FindObjectOfType<GameManager>();
+        if (gameManager != null)
         {
-            int currentScore = gameManager.GetScore();
-            if (currentScore != lastDisplayedScore)
-            {
-                UpdateScoreDisplay();
-                lastDisplayedScore = currentScore;
-            }
+            UpdateScoreDisplay(gameManager.GetScore());
+        }
+        else
+        {
+            UpdateScoreDisplay(0);
+        }
+        
+        // Subscribe to score changed event
+        if (gameEvents != null)
+        {
+            gameEvents.OnScoreChanged.AddListener(OnScoreChanged);
+            Debug.Log("ScoreUI subscribed to score changed events");
+        }
+        else
+        {
+            Debug.LogWarning("GameEvents ScriptableObject not assigned to ScoreUI!");
         }
     }
     
-    private void UpdateScoreDisplay()
+    private void OnDestroy()
     {
-        if (gameManager == null || scoreText == null) return;
+        // Unsubscribe from events
+        if (gameEvents != null)
+        {
+            gameEvents.OnScoreChanged.RemoveListener(OnScoreChanged);
+        }
+    }
+    
+    // Event handler for score changes
+    private void OnScoreChanged(int newScore)
+    {
+        Debug.Log($"[ScoreUI] Score changed event received: {newScore}");
+        UpdateScoreDisplay(newScore);
+        FlashScore();
+    }
+    
+    private void UpdateScoreDisplay(int currentScore)
+    {
+        if (scoreText == null) return;
         
-        int currentScore = gameManager.GetScore();
         scoreText.text = scorePrefix + currentScore.ToString();
         
+        // Update high score
         int highScore = PlayerPrefs.GetInt("HighScore", 0);
         if (currentScore > highScore)
         {

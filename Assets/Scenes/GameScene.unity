@@ -1562,6 +1562,7 @@ MonoBehaviour:
   highScoreText: {fileID: 755566516}
   scorePrefix: 'Score: '
   highScorePrefix: 'Best: '
+  gameEvents: {fileID: 11400000, guid: e4efdb5a238cdd84ab1338ac62ab334d, type: 2}
 --- !u!1 &1750510908
 GameObject:
   m_ObjectHideFlags: 0
@@ -1637,6 +1638,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentScore: 0
+  gameEvents: {fileID: 11400000, guid: e4efdb5a238cdd84ab1338ac62ab334d, type: 2}
   requireOnlineAuth: 1
 --- !u!4 &1795286142
 Transform:

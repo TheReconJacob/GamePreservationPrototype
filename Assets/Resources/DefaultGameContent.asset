@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6271c39c54ac86f4a95caecd3e6e0666, type: 3}
+  m_Name: DefaultGameContent
+  m_EditorClassIdentifier: 
+  targetPrefabs:
+  - {fileID: 8645231459505954852, guid: 90e53270bab24b64d935ecc2d4f57a01, type: 3}
+  pointValues: 0a000000140000001e000000
+  baseSpawnRate: 2
+  minSpawnRate: 0.5
+  maxConcurrentTargets: 5
+  spawnRateDecreasePerMilestone: 0.1
+  difficultyMilestoneInterval: 50
+  targetSpeedMultiplier: 1
+  startingLives: 3
+  comboBonus: 5
+  comboTimeWindow: 2

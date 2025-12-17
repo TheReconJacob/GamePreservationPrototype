@@ -1,0 +1,21 @@
+{
+  "modName": "Default Configuration",
+  "author": "System",
+  "version": "1.0",
+  "gameplayMods": {
+    "targetPointValues": [
+      10,
+      20,
+      30
+    ],
+    "playerSpeed": 5.0,
+    "projectileSpeed": 10.0,
+    "spawnRate": 2.0,
+    "difficulty": "normal"
+  },
+  "visualMods": {
+    "backgroundColor": "#1E1E1E",
+    "uiTheme": "dark",
+    "showFpsCounter": false
+  }
+}

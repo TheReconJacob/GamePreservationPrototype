@@ -14,9 +14,13 @@ public class Target : MonoBehaviour
     public GameEventSO gameEvents;
     
     private int actualPointValue;
+    private string targetPath;
     
     void Start()
     {
+        // Store scene path for network synchronization (works across clients)
+        targetPath = GetScenePath();
+        
         // Get point value from ModManager (which can fallback to ContentManager)
         if (pointValueOverride > 0)
         {
@@ -50,21 +54,71 @@ public class Target : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Projectile"))
         {
-            // Raise event instead of calling GameManager directly
-            if (gameEvents != null)
+            // Check if in network mode
+            bool isNetworkMode = Unity.Netcode.NetworkManager.Singleton != null && 
+                                (Unity.Netcode.NetworkManager.Singleton.IsClient || Unity.Netcode.NetworkManager.Singleton.IsServer);
+            
+            if (isNetworkMode)
             {
-                gameEvents.RaiseTargetDestroyed(actualPointValue);
+                // Network mode: Only server handles collisions to avoid duplicate requests
+                bool isServer = Unity.Netcode.NetworkManager.Singleton.IsServer;
+                
+                if (isServer)
+                {
+                    // Server: Request GameManager to sync destruction to all clients
+                    GameManager gameManager = FindObjectOfType<GameManager>();
+                    if (gameManager != null)
+                    {
+                        gameManager.RequestTargetDestruction(targetPath, actualPointValue);
+                    }
+                    
+                    // Destroy projectile on server
+                    Destroy(other.gameObject);
+                }
+                // Clients: Do nothing, wait for server to sync via ClientRpc
             }
             else
             {
-                Debug.LogWarning("GameEvents ScriptableObject not assigned to Target!");
+                // Offline/single-player mode: Direct destruction
+                if (gameEvents != null)
+                {
+                    gameEvents.RaiseTargetDestroyed(actualPointValue);
+                }
+                else
+                {
+                    Debug.LogWarning("GameEvents ScriptableObject not assigned to Target!");
+                }
+                
+                Debug.Log($"Target hit! Awarded {actualPointValue} points");
+                
+                Destroy(other.gameObject);
+                Destroy(gameObject);
             }
-            
-            Debug.Log($"Target hit! Awarded {actualPointValue} points");
-            
-            Destroy(other.gameObject);
-            
-            Destroy(gameObject);
         }
+    }
+    
+    /// <summary>
+    /// Public method for GameManager to destroy this target (called via network sync)
+    /// </summary>
+    public void DestroyTarget()
+    {
+        Destroy(gameObject);
+    }
+    
+    /// <summary>
+    /// Get the full scene hierarchy path for this target (unique and consistent across clients)
+    /// </summary>
+    private string GetScenePath()
+    {
+        string path = gameObject.name;
+        Transform current = transform.parent;
+        
+        while (current != null)
+        {
+            path = current.name + "/" + path;
+            current = current.parent;
+        }
+        
+        return path;
     }
 }

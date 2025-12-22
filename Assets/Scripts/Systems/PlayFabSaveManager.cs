@@ -46,6 +46,19 @@ public class PlayFabSaveManager : MonoBehaviour
     {
         Debug.Log($"Attempting to save score to cloud: {score}");
         
+        // Skip cloud save in network multiplayer mode
+        if (Unity.Netcode.NetworkManager.Singleton != null && 
+            (Unity.Netcode.NetworkManager.Singleton.IsClient || Unity.Netcode.NetworkManager.Singleton.IsServer))
+        {
+            Debug.Log("Network multiplayer mode - skipping cloud save");
+            var gameManager = FindObjectOfType<GameManager>();
+            if (gameManager != null)
+            {
+                gameManager.OnCloudSaveComplete(true);
+            }
+            return;
+        }
+        
         if (NetworkManager.Instance.IsOfflineMode())
         {
             Debug.Log("Offline mode - skipping cloud save");
@@ -122,6 +135,14 @@ public class PlayFabSaveManager : MonoBehaviour
     private void BlockGameplay()
     {
         Debug.LogError("BLOCKING GAMEPLAY: Cloud save failed and is required to continue");
+        
+        // Don't block gameplay in network mode - only block for single player
+        if (Unity.Netcode.NetworkManager.Singleton != null && 
+            (Unity.Netcode.NetworkManager.Singleton.IsClient || Unity.Netcode.NetworkManager.Singleton.IsServer))
+        {
+            Debug.LogWarning("Network mode detected - skipping gameplay block");
+            return;
+        }
         
         var player = FindObjectOfType<PlayerMovement>();
         if (player != null)

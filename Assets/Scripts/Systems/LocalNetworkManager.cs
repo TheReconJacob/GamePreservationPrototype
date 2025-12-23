@@ -42,11 +42,33 @@ public class LocalNetworkManager : MonoBehaviour
             {
                 Debug.LogError("[LocalNetworkManager] UnityTransport component not found on NetworkManager!");
             }
+            
+            // Enable connection approval and set up callback BEFORE starting network
+            Unity.Netcode.NetworkManager.Singleton.NetworkConfig.ConnectionApproval = true;
+            Unity.Netcode.NetworkManager.Singleton.ConnectionApprovalCallback = ApprovalCheck;
+            
+            // Disable automatic player spawning - we'll handle it manually
+            Unity.Netcode.NetworkManager.Singleton.NetworkConfig.PlayerPrefab = null;
         }
         else
         {
             Debug.LogError("[LocalNetworkManager] Unity.Netcode.NetworkManager.Singleton is null! Ensure NetworkManager exists in scene.");
         }
+    }
+    
+    /// <summary>
+    /// Connection approval callback - approves all connections for LAN play
+    /// </summary>
+    private void ApprovalCheck(Unity.Netcode.NetworkManager.ConnectionApprovalRequest request, Unity.Netcode.NetworkManager.ConnectionApprovalResponse response)
+    {
+        // Approve all connections for local LAN play
+        response.Approved = true;
+        response.CreatePlayerObject = false; // We handle player spawning manually
+        response.Pending = false; // Don't delay the response
+        response.Position = Vector3.zero; // Not used since CreatePlayerObject = false
+        response.Rotation = Quaternion.identity; // Not used since CreatePlayerObject = false
+        
+        Debug.Log($"[LocalNetworkManager] Connection approved for client ID: {request.ClientNetworkId}");
     }
     
     /// <summary>
@@ -63,9 +85,6 @@ public class LocalNetworkManager : MonoBehaviour
         
         // Destroy any existing player GameObjects in the scene
         DestroyScenePlayers();
-        
-        // Disable automatic player spawning - we'll handle it manually
-        Unity.Netcode.NetworkManager.Singleton.NetworkConfig.PlayerPrefab = null;
         
         bool success = Unity.Netcode.NetworkManager.Singleton.StartHost();
         
@@ -94,9 +113,6 @@ public class LocalNetworkManager : MonoBehaviour
         
         // Destroy any existing player GameObjects in the scene
         DestroyScenePlayers();
-        
-        // Disable automatic player spawning - we'll handle it manually
-        Unity.Netcode.NetworkManager.Singleton.NetworkConfig.PlayerPrefab = null;
         
         // Update transport address before connecting
         if (transport != null)
@@ -129,12 +145,18 @@ public class LocalNetworkManager : MonoBehaviour
             return;
         }
         
+        // Destroy any existing player GameObjects in the scene
+        DestroyScenePlayers();
+        
         bool success = Unity.Netcode.NetworkManager.Singleton.StartServer();
         
         if (success)
         {
             Debug.Log("[LocalNetworkManager] Started as Dedicated Server");
             Debug.Log($"[LocalNetworkManager] Listening on port: {port}");
+            
+            // Spawn a player for the server (clientId 0 = server)
+            StartCoroutine(SpawnPlayerDelayed(Unity.Netcode.NetworkManager.ServerClientId));
         }
         else
         {
@@ -243,9 +265,18 @@ public class LocalNetworkManager : MonoBehaviour
         {
             Debug.Log($"[LocalNetworkManager] Total connected clients: {Unity.Netcode.NetworkManager.Singleton.ConnectedClients.Count}");
             
-            // Spawn a player for this client
-            SpawnPlayerForClient(clientId);
+            // Spawn a player for this client (delayed to ensure network is ready)
+            StartCoroutine(SpawnPlayerDelayed(clientId));
         }
+    }
+    
+    /// <summary>
+    /// Spawn player with a small delay to ensure network is fully initialized
+    /// </summary>
+    private System.Collections.IEnumerator SpawnPlayerDelayed(ulong clientId)
+    {
+        yield return new WaitForSeconds(0.1f);
+        SpawnPlayerForClient(clientId);
     }
     
     /// <summary>

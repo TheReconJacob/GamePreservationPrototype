@@ -16,6 +16,10 @@ public class LocalNetworkManager : MonoBehaviour
     [Tooltip("Port for network communication")]
     public ushort port = 7777;
     
+    [Header("Lobby Configuration")]
+    [Tooltip("Reference to the Lobby UI (optional - will be hidden when game starts)")]
+    public LobbyUI lobbyUI;
+    
     [Header("Player Spawning")]
     [Tooltip("Player prefab to spawn for each connected client")]
     public GameObject playerPrefab;
@@ -24,6 +28,8 @@ public class LocalNetworkManager : MonoBehaviour
     public Transform[] spawnPoints;
     
     private UnityTransport transport;
+    private bool gameStarted = false;
+    private System.Collections.Generic.List<ulong> pendingClients = new System.Collections.Generic.List<ulong>();
     
     void Start()
     {
@@ -92,6 +98,12 @@ public class LocalNetworkManager : MonoBehaviour
         {
             Debug.Log("[LocalNetworkManager] Started as Host (Server + Local Client)");
             Debug.Log($"[LocalNetworkManager] Other players can connect to: {ipAddress}:{port}");
+            
+            // Show lobby UI after successful host start
+            if (lobbyUI != null)
+            {
+                lobbyUI.SetVisible(true);
+            }
         }
         else
         {
@@ -126,6 +138,12 @@ public class LocalNetworkManager : MonoBehaviour
         if (success)
         {
             Debug.Log($"[LocalNetworkManager] Started as Client, attempting connection to {ipAddress}:{port}");
+            
+            // Show lobby UI after successful client start
+            if (lobbyUI != null)
+            {
+                lobbyUI.SetVisible(true);
+            }
         }
         else
         {
@@ -154,6 +172,12 @@ public class LocalNetworkManager : MonoBehaviour
         {
             Debug.Log("[LocalNetworkManager] Started as Dedicated Server");
             Debug.Log($"[LocalNetworkManager] Listening on port: {port}");
+            
+            // Show lobby UI after successful server start (if available - won't exist in dedicated builds)
+            if (lobbyUI != null)
+            {
+                lobbyUI.SetVisible(true);
+            }
             
             // Spawn a player for the server (clientId 0 = server)
             StartCoroutine(SpawnPlayerDelayed(Unity.Netcode.NetworkManager.ServerClientId));
@@ -229,6 +253,42 @@ public class LocalNetworkManager : MonoBehaviour
         return spawnPoints[index].position;
     }
     
+    /// <summary>
+    /// Hide lobby and start the game.
+    /// Called by LobbyUI when host clicks "Start Game".
+    /// Spawns all pending players and hides the lobby.
+    /// </summary>
+    public void HideLobbyAndStartGame()
+    {
+        if (!Unity.Netcode.NetworkManager.Singleton.IsServer)
+        {
+            Debug.LogWarning("[LocalNetworkManager] Only the server/host can start the game!");
+            return;
+        }
+        
+        // Mark game as started
+        gameStarted = true;
+        
+        // Spawn all pending clients
+        Debug.Log($"[LocalNetworkManager] Starting game - spawning {pendingClients.Count} pending players");
+        foreach (ulong clientId in pendingClients)
+        {
+            SpawnPlayerForClient(clientId);
+        }
+        pendingClients.Clear();
+        
+        // Hide lobby on all clients
+        if (lobbyUI != null)
+        {
+            LobbySync lobbySync = FindObjectOfType<LobbySync>();
+            if (lobbySync != null)
+            {
+                lobbySync.HideLobbyClientRpc();
+            }
+            Debug.Log("[LocalNetworkManager] Game started - lobby hidden!");
+        }
+    }
+    
     // Network event callbacks
     void OnEnable()
     {
@@ -265,8 +325,20 @@ public class LocalNetworkManager : MonoBehaviour
         {
             Debug.Log($"[LocalNetworkManager] Total connected clients: {Unity.Netcode.NetworkManager.Singleton.ConnectedClients.Count}");
             
-            // Spawn a player for this client (delayed to ensure network is ready)
-            StartCoroutine(SpawnPlayerDelayed(clientId));
+            // If game has started, spawn immediately. Otherwise, add to pending list.
+            if (gameStarted)
+            {
+                StartCoroutine(SpawnPlayerDelayed(clientId));
+            }
+            else
+            {
+                // Add to pending list - will spawn when host starts game
+                if (!pendingClients.Contains(clientId))
+                {
+                    pendingClients.Add(clientId);
+                    Debug.Log($"[LocalNetworkManager] Client {clientId} added to lobby - waiting for game start");
+                }
+            }
         }
     }
     

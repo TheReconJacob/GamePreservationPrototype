@@ -1,3 +1,4 @@
+#if !DEDICATED_SERVER
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -6,6 +7,7 @@ using TMPro;
 /// Simple UI for starting local network sessions.
 /// Provides buttons for Host/Client/Server modes.
 /// Displays connection status and player count.
+/// CLIENT-ONLY: This entire script is excluded from dedicated server builds.
 /// </summary>
 public class NetworkUI : MonoBehaviour
 {
@@ -170,3 +172,4 @@ public class NetworkUI : MonoBehaviour
             ipInputField.gameObject.SetActive(true);
     }
 }
+#endif // !DEDICATED_SERVER

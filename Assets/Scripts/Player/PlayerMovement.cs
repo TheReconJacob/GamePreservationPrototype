@@ -46,6 +46,7 @@ public class PlayerMovement : NetworkBehaviour
     
     void Update()
     {
+#if !DEDICATED_SERVER
         // Check if in network mode - if so, only allow input for owner
         if (Unity.Netcode.NetworkManager.Singleton != null && 
             (Unity.Netcode.NetworkManager.Singleton.IsClient || Unity.Netcode.NetworkManager.Singleton.IsServer))
@@ -63,6 +64,7 @@ public class PlayerMovement : NetworkBehaviour
         {
             Debug.Log($"[PlayerMovement] Client {OwnerClientId} input: {moveDirection}");
         }
+#endif
     }
     
     void FixedUpdate()

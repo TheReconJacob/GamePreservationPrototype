@@ -1,9 +1,11 @@
+#if !DEDICATED_SERVER
 using UnityEngine;
 using Unity.Netcode;
 
 /// <summary>
 /// Network-aware camera follow system.
 /// Automatically attaches the main camera to the local player.
+/// CLIENT-ONLY: This entire script is excluded from dedicated server builds.
 /// </summary>
 public class NetworkCameraFollow : NetworkBehaviour
 {
@@ -82,3 +84,4 @@ public class NetworkCameraFollow : NetworkBehaviour
         }
     }
 }
+#endif // !DEDICATED_SERVER

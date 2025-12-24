@@ -70,6 +70,14 @@ public class DedicatedServerBootstrap : MonoBehaviour
         // Disable audio in server mode
         AudioListener.volume = 0f;
         
+        // Disable ALL AudioListener components (more aggressive)
+        AudioListener[] audioListeners = FindObjectsOfType<AudioListener>();
+        foreach (AudioListener listener in audioListeners)
+        {
+            listener.enabled = false;
+            Debug.Log($"[DedicatedServer] Disabled AudioListener: {listener.name}");
+        }
+        
         // Find all cameras and disable them in headless mode
         if (serverConfig != null && serverConfig.headlessMode)
         {
@@ -80,6 +88,16 @@ public class DedicatedServerBootstrap : MonoBehaviour
                 Debug.Log($"[DedicatedServer] Disabled camera: {cam.name}");
             }
         }
+        
+#if !DEDICATED_SERVER
+        // Disable UI canvases in runtime server mode (not needed if built with DEDICATED_SERVER)
+        Canvas[] canvases = FindObjectsOfType<Canvas>();
+        foreach (Canvas canvas in canvases)
+        {
+            canvas.enabled = false;
+            Debug.Log($"[DedicatedServer] Disabled canvas: {canvas.name}");
+        }
+#endif
         
         Debug.Log("[DedicatedServer] Server initialization complete");
     }

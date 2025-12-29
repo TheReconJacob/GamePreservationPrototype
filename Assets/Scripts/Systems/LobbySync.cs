@@ -20,4 +20,32 @@ public class LobbySync : NetworkBehaviour
             lobbyUI.SetVisible(false);
         }
     }
+    
+    /// <summary>
+    /// ClientRpc to hide lobby for specific client (used for dedicated server)
+    /// </summary>
+    [ClientRpc]
+    public void HideLobbyForClientClientRpc(ClientRpcParams clientRpcParams = default)
+    {
+        LobbyUI lobbyUI = FindObjectOfType<LobbyUI>();
+        if (lobbyUI != null)
+        {
+            lobbyUI.SetVisible(false);
+            Debug.Log("[LobbySync] Client connected to dedicated server - lobby hidden");
+        }
+    }
+    
+    /// <summary>
+    /// ClientRpc to show lobby for specific client (used for host with lobby)
+    /// </summary>
+    [ClientRpc]
+    public void ShowLobbyForClientClientRpc(ClientRpcParams clientRpcParams = default)
+    {
+        LobbyUI lobbyUI = FindObjectOfType<LobbyUI>();
+        if (lobbyUI != null)
+        {
+            lobbyUI.SetVisible(true);
+            Debug.Log("[LobbySync] Client connected to host - lobby shown");
+        }
+    }
 }

@@ -92,17 +92,29 @@ public class Target : MonoBehaviour
                 Debug.Log($"Target hit! Awarded {actualPointValue} points");
                 
                 Destroy(other.gameObject);
-                Destroy(gameObject);
+                DestroyTarget(); // Use DestroyTarget() instead of Destroy(gameObject) for pool compatibility
             }
         }
     }
     
     /// <summary>
     /// Public method for GameManager to destroy this target (called via network sync)
+    /// Also used by pool system to deactivate instead of destroy
     /// </summary>
     public void DestroyTarget()
     {
-        Destroy(gameObject);
+        // Check if this is a pooled target
+        TargetPoolHelper poolHelper = GetComponent<TargetPoolHelper>();
+        if (poolHelper != null)
+        {
+            // Pooled target - deactivate instead of destroy
+            gameObject.SetActive(false);
+        }
+        else
+        {
+            // Non-pooled target - traditional destroy
+            Destroy(gameObject);
+        }
     }
     
     /// <summary>

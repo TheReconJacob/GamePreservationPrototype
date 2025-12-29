@@ -29,6 +29,7 @@ public class LocalNetworkManager : MonoBehaviour
     
     private UnityTransport transport;
     private bool gameStarted = false;
+    private bool isDedicatedServer = false;
     private System.Collections.Generic.List<ulong> pendingClients = new System.Collections.Generic.List<ulong>();
     
     void Start()
@@ -139,7 +140,7 @@ public class LocalNetworkManager : MonoBehaviour
         {
             Debug.Log($"[LocalNetworkManager] Started as Client, attempting connection to {ipAddress}:{port}");
             
-            // Show lobby UI after successful client start
+            // Show lobby by default - will be hidden if connecting to dedicated server
             if (lobbyUI != null)
             {
                 lobbyUI.SetVisible(true);
@@ -173,11 +174,18 @@ public class LocalNetworkManager : MonoBehaviour
             Debug.Log("[LocalNetworkManager] Started as Dedicated Server");
             Debug.Log($"[LocalNetworkManager] Listening on port: {port}");
             
-            // Show lobby UI after successful server start (if available - won't exist in dedicated builds)
+            // Mark as dedicated server
+            isDedicatedServer = true;
+            
+            // Hide lobby UI for dedicated server (server doesn't need UI)
             if (lobbyUI != null)
             {
-                lobbyUI.SetVisible(true);
+                lobbyUI.SetVisible(false);
             }
+            Debug.Log("[LocalNetworkManager] Dedicated server mode - lobby UI hidden");
+            
+            // Mark game as started immediately (no lobby wait for server)
+            gameStarted = true;
             
             // Spawn a player for the server (clientId 0 = server)
             StartCoroutine(SpawnPlayerDelayed(Unity.Netcode.NetworkManager.ServerClientId));
@@ -324,6 +332,34 @@ public class LocalNetworkManager : MonoBehaviour
         if (Unity.Netcode.NetworkManager.Singleton.IsServer)
         {
             Debug.Log($"[LocalNetworkManager] Total connected clients: {Unity.Netcode.NetworkManager.Singleton.ConnectedClients.Count}");
+            
+            // Tell client whether to show lobby or not based on server type
+            LobbySync lobbySync = FindObjectOfType<LobbySync>();
+            if (lobbySync != null)
+            {
+                if (isDedicatedServer)
+                {
+                    // Dedicated server - hide lobby on client
+                    lobbySync.HideLobbyForClientClientRpc(new ClientRpcParams
+                    {
+                        Send = new ClientRpcSendParams
+                        {
+                            TargetClientIds = new ulong[] { clientId }
+                        }
+                    });
+                }
+                else
+                {
+                    // Host with lobby - show lobby on client
+                    lobbySync.ShowLobbyForClientClientRpc(new ClientRpcParams
+                    {
+                        Send = new ClientRpcSendParams
+                        {
+                            TargetClientIds = new ulong[] { clientId }
+                        }
+                    });
+                }
+            }
             
             // If game has started, spawn immediately. Otherwise, add to pending list.
             if (gameStarted)

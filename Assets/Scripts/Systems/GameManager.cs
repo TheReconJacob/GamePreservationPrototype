@@ -53,9 +53,40 @@ public class GameManager : NetworkBehaviour
         
         if (!isNetworkMode)
         {
-            // Single-player/offline mode: Also reset to 0 (user wants fresh start always)
-            currentScore = 0;
-            Debug.Log("[GameManager] Offline mode - score reset to 0");
+            // Check if this is a fresh game launch (not a transition from online)
+            // LastSessionScore should ONLY persist during online→offline transitions in same session
+            bool wasOnlineThisSession = PlayerPrefs.GetInt("WasOnlineThisSession", 0) == 1;
+            bool justLoggedInAfterOffline = PlayerPrefs.GetInt("JustLoggedInAfterOffline", 0) == 1;
+            
+            if (CustomNetworkManager.Instance.IsOfflineMode() && wasOnlineThisSession)
+            {
+                // Offline mode after being online: Load previous score
+                currentScore = PlayerPrefs.GetInt("LastSessionScore", 0);
+                Debug.Log($"[GameManager] Offline mode (transitioned from online) - loaded previous score: {currentScore}");
+            }
+            else if (justLoggedInAfterOffline)
+            {
+                // Just logged in after playing offline: Load offline progress
+                currentScore = PlayerPrefs.GetInt("LastSessionScore", 0);
+                PlayerPrefs.SetInt("JustLoggedInAfterOffline", 0); // Clear flag
+                PlayerPrefs.SetInt("WasOnlineThisSession", 1); // Now we're online
+                PlayerPrefs.Save();
+                Debug.Log($"[GameManager] Logged in after offline play - loaded previous score: {currentScore}");
+            }
+            else
+            {
+                // Fresh start (offline or online): Start at 0
+                currentScore = 0;
+                Debug.Log("[GameManager] Fresh start - score set to 0");
+                
+                // Mark as online session if we have internet
+                if (!CustomNetworkManager.Instance.IsOfflineMode())
+                {
+                    PlayerPrefs.SetInt("WasOnlineThisSession", 1);
+                    PlayerPrefs.Save();
+                    Debug.Log("[GameManager] Marked session as online");
+                }
+            }
             
             // Broadcast the initial score to UI
             if (gameEvents != null)
@@ -68,12 +99,24 @@ public class GameManager : NetworkBehaviour
         Debug.Log("Player authenticated as: " + PlayerPrefs.GetString("PlayerUsername", "None"));
     }
     
+    private void OnApplicationQuit()
+    {
+        // Clear session flag so next launch is treated as fresh start
+        PlayerPrefs.SetInt("WasOnlineThisSession", 0);
+        PlayerPrefs.SetInt("LastSessionScore", 0);
+        PlayerPrefs.Save();
+        Debug.Log("[GameManager] Application quit - session flags cleared");
+    }
+    
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
         
-        // Reset score to 0 for both host and client
+        // Network multiplayer mode: Reset score to 0 for both host and client
+        // Clear LastSessionScore to avoid confusion (multiplayer scores don't persist)
         currentScore = 0;
+        PlayerPrefs.SetInt("LastSessionScore", 0);
+        PlayerPrefs.Save();
         
         // Subscribe to network score changes on all clients
         networkScore.OnValueChanged += OnNetworkScoreChanged;
@@ -112,6 +155,10 @@ public class GameManager : NetworkBehaviour
         
         // Unsubscribe from network score changes
         networkScore.OnValueChanged -= OnNetworkScoreChanged;
+        
+        // DO NOT clear session flags here - they need to persist across scene transitions
+        // (e.g., when redirecting to LoginScene and back)
+        // Flags are only cleared in OnApplicationQuit()
     }
     
     /// <summary>
@@ -135,8 +182,18 @@ public class GameManager : NetworkBehaviour
         
         if (!CustomNetworkManager.Instance.IsOfflineMode() && wasBypassedLogin)
         {
-            Debug.Log("Internet restored - user bypassed login, redirecting to login screen");
+            Debug.Log($"Internet restored - user bypassed login, redirecting to login screen. Current score: {currentScore}");
+            
+            // Save score to both JSON and PlayerPrefs for persistence
             LocalSaveManager.Instance.SaveToJSON(currentScore);
+            PlayerPrefs.SetInt("LastSessionScore", currentScore);
+            
+            // Set flag so score persists after login
+            PlayerPrefs.SetInt("JustLoggedInAfterOffline", 1);
+            PlayerPrefs.Save();
+            
+            Debug.Log($"[GameManager] Saved score {currentScore} before login redirect");
+            
             SceneManager.LoadScene("LoginScene");
         }
         else if (!CustomNetworkManager.Instance.IsOfflineMode())
@@ -218,6 +275,10 @@ public class GameManager : NetworkBehaviour
             // Single-player mode: Direct score update
             currentScore += points;
             Debug.Log($"Score updated! Current score: {currentScore}");
+            
+            // Save to PlayerPrefs for session persistence (online->offline continuity)
+            PlayerPrefs.SetInt("LastSessionScore", currentScore);
+            PlayerPrefs.Save();
             
             // Save to local and cloud storage
             LocalSaveManager.Instance.SaveToJSON(currentScore);

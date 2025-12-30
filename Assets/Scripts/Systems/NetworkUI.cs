@@ -84,7 +84,7 @@ public class NetworkUI : MonoBehaviour
         }
         
         localNetworkManager.StartClient();
-        UpdateStatusText($"Connecting to {localNetworkManager.ipAddress}...");
+        UpdateStatusText("Connecting...");
         ShowDisconnectButton();
         HideConnectionButtons();
     }
@@ -121,7 +121,7 @@ public class NetworkUI : MonoBehaviour
         }
     }
     
-    void UpdateStatusText(string message)
+    public void UpdateStatusText(string message)
     {
         if (statusText != null)
         {

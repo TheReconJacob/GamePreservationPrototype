@@ -43,34 +43,6 @@ public class ServerBuildProcessor : IPreprocessBuildWithReport
 /// </summary>
 public class ServerBuildMenu
 {
-    [MenuItem("Build/Toggle Server Build Mode")]
-    public static void ToggleServerBuild()
-    {
-        BuildTargetGroup targetGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
-        string defines = PlayerSettings.GetScriptingDefineSymbolsForGroup(targetGroup);
-        
-        if (defines.Contains("DEDICATED_SERVER"))
-        {
-            // Remove server define
-            defines = defines.Replace("DEDICATED_SERVER", "").Replace(";;", ";").Trim(';');
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(targetGroup, defines);
-            Debug.Log("[ServerBuildMenu] Server build mode DISABLED - client build active");
-            Debug.Log($"[ServerBuildMenu] Defines: {defines}");
-        }
-        else
-        {
-            // Add server define
-            if (string.IsNullOrEmpty(defines))
-                defines = "DEDICATED_SERVER";
-            else
-                defines += ";DEDICATED_SERVER";
-            
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(targetGroup, defines);
-            Debug.Log("[ServerBuildMenu] Server build mode ENABLED - server build active");
-            Debug.Log($"[ServerBuildMenu] Defines: {defines}");
-        }
-    }
-    
     [MenuItem("Build/Build Server (Windows x64)")]
     public static void BuildServer()
     {
@@ -89,16 +61,16 @@ public class ServerBuildMenu
             Debug.Log("[ServerBuildMenu] Added DEDICATED_SERVER define for build");
         }
         
-        // Configure build options
+        // Configure build options with headless mode for server
         BuildPlayerOptions buildOptions = new BuildPlayerOptions
         {
             scenes = new[] { "Assets/Scenes/LoginScene.unity", "Assets/Scenes/GameScene.unity" },
             locationPathName = "Builds/Server/GamePreservationPrototype_Server.exe",
             target = BuildTarget.StandaloneWindows64,
-            options = BuildOptions.None
+            options = BuildOptions.EnableHeadlessMode // Run without graphics/UI
         };
         
-        Debug.Log("[ServerBuildMenu] Starting server build...");
+        Debug.Log("[ServerBuildMenu] Starting server build (headless mode)...");
         Debug.Log($"[ServerBuildMenu] Output: {buildOptions.locationPathName}");
         
         BuildReport report = BuildPipeline.BuildPlayer(buildOptions);
@@ -114,48 +86,6 @@ public class ServerBuildMenu
         else
         {
             Debug.LogError($"[ServerBuildMenu] Server build failed: {report.summary.result}");
-        }
-    }
-    
-    [MenuItem("Build/Build Client (Windows x64)")]
-    public static void BuildClient()
-    {
-        // Remove server define
-        BuildTargetGroup targetGroup = BuildTargetGroup.Standalone;
-        string defines = PlayerSettings.GetScriptingDefineSymbolsForGroup(targetGroup);
-        
-        if (defines.Contains("DEDICATED_SERVER"))
-        {
-            defines = defines.Replace("DEDICATED_SERVER", "").Replace(";;", ";").Trim(';');
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(targetGroup, defines);
-            Debug.Log("[ServerBuildMenu] Removed DEDICATED_SERVER define for client build");
-        }
-        
-        // Configure build options
-        BuildPlayerOptions buildOptions = new BuildPlayerOptions
-        {
-            scenes = new[] { "Assets/Scenes/LoginScene.unity", "Assets/Scenes/GameScene.unity" },
-            locationPathName = "Builds/Client/GamePreservationPrototype.exe",
-            target = BuildTarget.StandaloneWindows64,
-            options = BuildOptions.None
-        };
-        
-        Debug.Log("[ServerBuildMenu] Starting client build...");
-        Debug.Log($"[ServerBuildMenu] Output: {buildOptions.locationPathName}");
-        
-        BuildReport report = BuildPipeline.BuildPlayer(buildOptions);
-        
-        if (report.summary.result == BuildResult.Succeeded)
-        {
-            Debug.Log($"[ServerBuildMenu] Client build succeeded! Size: {report.summary.totalSize / (1024 * 1024)}MB");
-            Debug.Log($"[ServerBuildMenu] Location: {buildOptions.locationPathName}");
-            
-            // Show in Explorer
-            EditorUtility.RevealInFinder(buildOptions.locationPathName);
-        }
-        else
-        {
-            Debug.LogError($"[ServerBuildMenu] Client build failed: {report.summary.result}");
         }
     }
 }

@@ -33,6 +33,19 @@ public class LobbySync : NetworkBehaviour
             lobbyUI.SetVisible(false);
             Debug.Log("[LobbySync] Client connected to dedicated server - lobby hidden");
         }
+        
+        // Update status text to show we're connected to a dedicated server
+        #if !DEDICATED_SERVER
+        NetworkUI networkUI = FindObjectOfType<NetworkUI>();
+        if (networkUI != null)
+        {
+            LocalNetworkManager localNetworkManager = FindObjectOfType<LocalNetworkManager>();
+            if (localNetworkManager != null)
+            {
+                networkUI.UpdateStatusText($"Connected to dedicated server at {localNetworkManager.ipAddress}");
+            }
+        }
+        #endif
     }
     
     /// <summary>
@@ -47,5 +60,14 @@ public class LobbySync : NetworkBehaviour
             lobbyUI.SetVisible(true);
             Debug.Log("[LobbySync] Client connected to host - lobby shown");
         }
+        
+        // Update status text to show we're connected to a hosted lobby
+        #if !DEDICATED_SERVER
+        NetworkUI networkUI = FindObjectOfType<NetworkUI>();
+        if (networkUI != null)
+        {
+            networkUI.UpdateStatusText("Connected to hosted lobby");
+        }
+        #endif
     }
 }

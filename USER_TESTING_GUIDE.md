@@ -105,6 +105,53 @@
 
 ---
 
+## Part 4 (Optional): Test Headless Server (Advanced)
+
+**What you're testing:** Can a standalone server run without a player?
+
+**Note:** This is optional and requires the headless server build file.
+
+### Steps:
+
+#### 4a. Start Headless Server
+1. **If you have `GamePreservationPrototype_Server.exe`:**
+   - Double-click to launch it
+   - A window may briefly appear then close (this is normal)
+   - Server runs silently in the background
+2. **Check it's running:**
+   - Open Task Manager (Ctrl+Shift+Esc)
+   - Look for "GamePreservationPrototype_Server.exe" in processes
+   - Server is listening on IP `127.0.0.1` (localhost)
+
+**✅ SUCCESS:** Server process visible in Task Manager
+
+#### 4b. Connect as Client
+1. **Launch the normal game** `GamePreservationPrototype.exe`
+2. **Login** with test credentials
+3. **IP address should show:** `127.0.0.1`
+4. **Click "Start Client" button**
+5. **Expected result:**
+   - Connection message shows: "Connecting..."
+   - Then: "Connected to dedicated server at 127.0.0.1"
+   - **No lobby appears** (spawns directly into game)
+   - You see your player character immediately
+   - **No extra "ghost" player** (server doesn't spawn itself)
+
+**✅ SUCCESS:** Connected directly without lobby, only 1 player visible
+
+**Difference from Host:**
+- Headless Server: No lobby, immediate spawn, server has no player character
+- Host: Lobby appears, must wait for "Start Game", host IS a player
+
+#### 4c. Stop Server
+1. **Open Task Manager**
+2. **Find** `GamePreservationPrototype_Server.exe`
+3. **Right-click** → **End Task**
+
+**✅ You're done when:** You've tested connecting to a standalone server
+
+---
+
 ## Quick Troubleshooting
 
 **Can't login?**
@@ -139,6 +186,11 @@ As you test, consider:
 - Was the setup straightforward?
 - Was the lobby system easy to understand?
 - Did the gameplay feel synchronized between windows?
+
+**Headless Server (if tested):**
+- Did the server run without opening a window?
+- Was connecting different from connecting to a Host?
+- Did you notice the server had no player character?
 
 **Overall:**
 - What was confusing or frustrating?

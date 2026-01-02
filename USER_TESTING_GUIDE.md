@@ -20,7 +20,7 @@
 
 ---
 
-## Part 1: Login & Play Online (5 minutes)
+## Part 1: Login & Play Online (10 minutes)
 
 **What you're testing:** Normal online gameplay
 

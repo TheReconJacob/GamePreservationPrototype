@@ -46,9 +46,12 @@ public class ServerBuildMenu
     [MenuItem("Build/Build Server (Windows x64)")]
     public static void BuildServer()
     {
-        // Enable server define
+        // Store original defines to restore after build
         BuildTargetGroup targetGroup = BuildTargetGroup.Standalone;
-        string defines = PlayerSettings.GetScriptingDefineSymbolsForGroup(targetGroup);
+        string originalDefines = PlayerSettings.GetScriptingDefineSymbolsForGroup(targetGroup);
+        
+        // Enable server define temporarily for build
+        string defines = originalDefines;
         
         if (!defines.Contains("DEDICATED_SERVER"))
         {
@@ -74,6 +77,10 @@ public class ServerBuildMenu
         Debug.Log($"[ServerBuildMenu] Output: {buildOptions.locationPathName}");
         
         BuildReport report = BuildPipeline.BuildPlayer(buildOptions);
+        
+        // Restore original defines after build completes
+        PlayerSettings.SetScriptingDefineSymbolsForGroup(targetGroup, originalDefines);
+        Debug.Log("[ServerBuildMenu] Restored original scripting defines");
         
         if (report.summary.result == BuildResult.Succeeded)
         {

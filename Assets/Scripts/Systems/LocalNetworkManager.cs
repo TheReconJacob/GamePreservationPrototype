@@ -187,8 +187,21 @@ public class LocalNetworkManager : MonoBehaviour
             // Mark game as started immediately (no lobby wait for server)
             gameStarted = true;
             
-            // Spawn a player for the server (clientId 0 = server)
-            StartCoroutine(SpawnPlayerDelayed(Unity.Netcode.NetworkManager.ServerClientId));
+            // Only spawn server player if NOT running in headless mode
+            // Headless servers (built with Build Server) don't need a player
+            // In-game "Start Server" button CAN have a server player
+            bool isHeadless = Application.isBatchMode || SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null;
+            
+            if (!isHeadless)
+            {
+                // Spawn a player for the server (clientId 0 = server)
+                StartCoroutine(SpawnPlayerDelayed(Unity.Netcode.NetworkManager.ServerClientId));
+                Debug.Log("[LocalNetworkManager] Server player will spawn (non-headless mode)");
+            }
+            else
+            {
+                Debug.Log("[LocalNetworkManager] Headless server - no player spawn");
+            }
         }
         else
         {

@@ -12,7 +12,9 @@
 - **Game executable:** [Download from GitHub Releases](https://github.com/TheReconJacob/GamePreservationPrototype/releases/v1.0.0)  
   - **Client:** `GamePreservationPrototype.exe` (required for all tests)  
   - **Server (optional):** `GamePreservationPrototype_Server.exe` (only needed for Part 4)
-- Test login: **Email:** `test@test.com` **Password:** `testtest`
+- **Test login:**  
+  **Email:** `test@test.com`  
+  **Password:** `testtest`
 - Internet connection (you'll turn it off and on during testing)
 - For multiplayer test: Ability to run the game twice at the same time
 
@@ -38,20 +40,37 @@
 
 ## Part 2: Test Offline Mode (5 minutes)
 
-**What you're testing:** Does the game work without internet?
+**What you're testing:** Does the game work without internet, and does it retain progress when switching online/offline?
 
-### Steps:
+### Scenario 1: Start Offline, Then Go Online
 1. **Turn off your internet** (disconnect Wi-Fi)
-2. **Launch the game again**
-3. **Expected result:**
-   - Game opens directly (skips login)
-   - You see "OFFLINE MODE" text (top-right corner)
+2. **Launch the game**  
+   - **Expected result:** Game opens directly (skips login)  
+   - You see **"OFFLINE MODE"** in the top-right corner  
    - Game is playable
-4. **Play for 1-2 minutes** - confirm you can move, shoot, earn points
-5. **Close the game**
-6. **Turn internet back on**
+3. **Play for 1-2 minutes** and earn points
+4. **Turn your internet back on**
+5. **Expected result:** Game shows the **login page** because it detects an online connection  
+   - After logging in, your **score from offline mode should be retained**
+6. **Close the game**
 
-**✅ You're done when:** You've confirmed offline mode works
+---
+
+### Scenario 2: Start Online, Then Go Offline
+1. **Launch the game** with internet on
+2. **Login** with test credentials
+3. **Play for 1-2 minutes** and earn points
+4. **Turn off your internet** (disconnect Wi-Fi)
+5. **Expected result:**  
+   - Game automatically switches to **OFFLINE MODE**  
+   - You can continue playing without interruption  
+   - Your **score continues from the online session**
+6. **Play for 1-2 minutes**, confirm points are added
+7. **Turn internet back on**  
+   - Expected result: Game returns to **online mode**, retains the updated score
+8. **Close the game**
+
+**✅ You're done when:** Both offline/online transitions work and the score is preserved correctly
 
 **❌ If it doesn't work:** Note what happened in the survey's feedback question
 
@@ -111,18 +130,17 @@
 
 **What you're testing:** Can a standalone server run without a player?
 
-**Note:** This is optional and requires the headless server build file.
+**Note:** This is optional and requires the **server executable** `GamePreservationPrototype_Server.exe`.
 
 ### Steps:
 
 #### 4a. Start Headless Server
-1. **If you have `GamePreservationPrototype_Server.exe`:**
-   - Double-click to launch it
-   - A window may briefly appear then close (this is normal)
+1. **Launch `GamePreservationPrototype_Server.exe`**  
+   - A window may briefly appear then close (this is normal)  
    - Server runs silently in the background
 2. **Check it's running:**
    - Open Task Manager (Ctrl+Shift+Esc)
-   - Look for "GamePreservationPrototype_Server.exe" in processes
+   - Look for `GamePreservationPrototype_Server.exe` in processes
    - Server is listening on IP `127.0.0.1` (localhost)
 
 **✅ SUCCESS:** Server process visible in Task Manager
@@ -183,6 +201,7 @@ As you test, consider:
 - Was it clear when you were in offline mode?
 - Did your score continue from where you left off online?
 - Did everything work the same as online?
+- Did switching between online/offline retain your progress correctly?
 
 **Local Multiplayer:**
 - Was the setup straightforward?

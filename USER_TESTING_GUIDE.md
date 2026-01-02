@@ -2,7 +2,7 @@
 
 **Read this guide before starting the survey.**
 
-**Time Required:** 20-30 minutes
+**Time Required:**30-35 minutes
 
 ---
 
@@ -126,7 +126,7 @@
 
 ---
 
-## Part 4 (Optional): Test Headless Server (Advanced)
+## Part 4 (Optional): Test Headless Server (Advanced) (5 minutes)
 
 **What you're testing:** Can a standalone server run without a player?
 

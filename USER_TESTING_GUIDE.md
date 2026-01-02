@@ -9,7 +9,9 @@
 ## Before You Begin
 
 ### What You Need
-- Game executable: `GamePreservationPrototype.exe`
+- **Game executable:** [Download from GitHub Releases](https://github.com/TheReconJacob/GamePreservationPrototype/releases/v1.0.0)  
+  - **Client:** `GamePreservationPrototype.exe` (required for all tests)  
+  - **Server (optional):** `GamePreservationPrototype_Server.exe` (only needed for Part 4)
 - Test login: **Email:** `test@test.com` **Password:** `testtest`
 - Internet connection (you'll turn it off and on during testing)
 - For multiplayer test: Ability to run the game twice at the same time

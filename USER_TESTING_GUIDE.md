@@ -20,7 +20,7 @@
 
 ---
 
-## Part 1: Login & Play Online (10 minutes)
+## Part 1: Login & Play Online (5 minutes)
 
 **What you're testing:** Normal online gameplay
 
@@ -38,7 +38,7 @@
 
 ---
 
-## Part 2: Test Offline Mode (5 minutes)
+## Part 2: Test Offline Mode (10 minutes)
 
 **What you're testing:** Does the game work without internet, and does it retain progress when switching online/offline?
 

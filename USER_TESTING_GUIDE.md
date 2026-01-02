@@ -126,7 +126,7 @@
 
 ---
 
-## Part 4 (Optional): Test Headless Server (Advanced) (5 minutes)
+## Part 4 (Optional): Test Headless Server (5 minutes)
 
 **What you're testing:** Can a standalone server run without a player?
 
